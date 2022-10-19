@@ -8,7 +8,7 @@ const db = mysql.createConnection({
     password: 'password',
     database: 'company_db'
 },
-console.log(`Connected to the company_db database.`)
+console.log(`Connected to the company_db database.\n\n------------------------------------\n|                                  |\n|         EMPLOYEE MANAGER         |\n|                                  |\n------------------------------------\n`)
 );
 
 function init() {
@@ -50,6 +50,22 @@ function init() {
                 addEmployee();
             }else if (input.todo == 'Update Employee Role'){
                 updateRole();
+            }else if (input.todo == 'Update Employee Manager'){
+                updateMan();
+            }else if (input.todo == 'View Employees by Manager'){
+                viewEmpByMan();
+            }else if (input.todo == 'View Employees by Department'){
+                viewEmpByDept();
+            }else if (input.todo == 'Delete Department'){
+                delDept();
+            }else if (input.todo == 'Delete Role'){
+                delRole();
+            }else if (input.todo == 'Delete Employee'){
+                delEmp();
+            }else if (input.todo == 'Total Budget of Department'){
+                totalBudgetByDept();
+            }else{
+                console.log("Goodbye. Please press Ctrl + Z to return to terminal.");
             }
             
         });
@@ -67,9 +83,9 @@ function viewDept() {
 };
 
 function viewRole(){
-    db.query('SELECT * FROM role;', function(err, results){
+    db.query('SELECT role.id, role.title, department.name as department, role.salary FROM role LEFT JOIN department ON role.department_id = department.id;', function(err, results){
         if (err){
-            res.status(400).send('Error in Database');
+            console.log('Error in Database');
         }else{
             console.table(results);
             init();
@@ -78,7 +94,7 @@ function viewRole(){
 };
 
 function viewEmployee(){
-    db.query('SELECT a.id, a.first_name, a.last_name, role.title, department.name, role.salary, concat(b.first_name, " ", b.last_name) AS manager FROM employee AS a LEFT JOIN employee AS b ON a.manager_id = b.id JOIN role ON a.role_id = role.id JOIN department ON role.department_id = department.id;', function(err, results){
+    db.query('SELECT a.id, a.first_name, a.last_name, role.title, department.name as department, role.salary, concat(b.first_name, " ", b.last_name) AS manager FROM employee AS a LEFT JOIN employee AS b ON a.manager_id = b.id LEFT JOIN role ON a.role_id = role.id LEFT JOIN department ON role.department_id = department.id;', function(err, results){
         if (err){
             console.log('Error in Database');
         }else{
@@ -246,7 +262,7 @@ function updateRole(){
         .prompt([
             {
             type: 'input',
-            message: "Press any key to continue.",
+            message: "Press enter to continue.",
             name: 'confirm',
         },
         {
@@ -274,5 +290,303 @@ function updateRole(){
     })
 };
 
-init();
+function updateMan(){
+    const empList =[];
+    db.query('SELECT concat (first_name, " ", last_name) as name, id FROM employee;', function(err, results){
+        if (err){
+            console.log('Error in Database');
+        }else{
+            results.forEach(emp => {
+                let temp = {
+                    name: emp.name,
+                    value: emp.id
+                }
+                empList.push(temp);
+            });
+        }
+    });
+    inquirer
+        .prompt([
+            {
+            type: 'input',
+            message: "Press enter to continue.",
+            name: 'confirm',
+        },
+        {
+            type: 'list',
+            message: "Change who's manager?",
+            name: 'employee',
+            choices: empList,
+        },
+        {
+            type: 'list',
+            message: "New manager name?",
+            name: 'manager',
+            choices: empList,
+        },
+    ])
+    .then(answer => {
+        db.query(`UPDATE employee SET manager_id = ${answer.manager} WHERE id = ${answer.employee};`, function(err,results){
+            if (err){
+                console.log('Error in Database');
+            }else{
+                console.log("Success")
+                init();
+            }
+        });
+    })
+};
 
+function viewEmpByMan(){
+    const manList =[];
+    db.query('SELECT concat (first_name, " ", last_name) as name, id FROM employee WHERE manager_id IS NULL;', function(err, results){
+        if (err){
+            console.log('Error in Database');
+        }else{
+            results.forEach(emp => {
+                let temp = {
+                    name: emp.name,
+                    value: emp.id
+                }
+                manList.push(temp);
+            });
+        }
+    });
+    
+    inquirer
+        .prompt([
+            {
+            type: 'input',
+            message: "Press enter to continue.",
+            name: 'confirm',
+        },
+        {
+            type: 'list',
+            message: "Which manager's subordinates?",
+            name: 'manager',
+            choices: manList,
+        },
+    ])
+    .then(answer => {
+        db.query(`SELECT a.id, a.first_name, a.last_name, role.title, department.name as department, role.salary, concat(b.first_name, " ", b.last_name) AS manager FROM employee AS a LEFT JOIN employee AS b ON a.manager_id = b.id LEFT JOIN role ON a.role_id = role.id LEFT JOIN department ON role.department_id = department.id WHERE a.manager_id = ${answer.manager};`, function(err,results){
+            if (err){
+                console.log('Error in Database');
+            }else{
+                console.table(results);
+                init();
+            }
+        });
+    })
+};
+
+function viewEmpByDept(){
+    const deptList =[];
+    db.query('SELECT name, id FROM department;', function(err, results){
+        if (err){
+            console.log('Error in Database');
+        }else{
+            results.forEach(emp => {
+                let temp = {
+                    name: emp.name,
+                    value: emp.id
+                }
+                deptList.push(temp);
+            });
+        }
+    });
+    
+    inquirer
+        .prompt([
+            {
+            type: 'input',
+            message: "Press enter to continue.",
+            name: 'confirm',
+        },
+        {
+            type: 'list',
+            message: "Which department?",
+            name: 'dept',
+            choices: deptList,
+        },
+    ])
+    .then(answer => {
+        db.query(`SELECT a.id, a.first_name, a.last_name, role.title, department.name as department, role.salary, concat(b.first_name, " ", b.last_name) AS manager FROM employee AS a LEFT JOIN employee AS b ON a.manager_id = b.id LEFT JOIN role ON a.role_id = role.id LEFT JOIN department ON role.department_id = department.id WHERE department.id = ${answer.dept};`, function(err,results){
+            if (err){
+                console.log('Error in Database');
+            }else{
+                console.table(results);
+                init();
+            }
+        });
+    })
+};
+
+function delDept(){
+    const deptList =[];
+    db.query('SELECT name, id FROM department;', function(err, results){
+        if (err){
+            console.log('Error in Database');
+        }else{
+            results.forEach(emp => {
+                let temp = {
+                    name: emp.name,
+                    value: emp.id
+                }
+                deptList.push(temp);
+            });
+        }
+    });
+    
+    inquirer
+        .prompt([
+            {
+            type: 'input',
+            message: "Press enter to continue.",
+            name: 'confirm',
+        },
+        {
+            type: 'list',
+            message: "Delete which department?",
+            name: 'dept',
+            choices: deptList,
+        },
+    ])
+    .then(answer => {
+        db.query(`DELETE FROM department WHERE id = ${answer.dept};`, function(err,results){
+            if (err){
+                console.log('Error in Database');
+            }else{
+                console.log("Success")
+                init();
+            }
+        });
+    })
+};
+
+function delRole(){
+    const roleList =[];
+    db.query('SELECT title, id FROM role;', function(err, results){
+        if (err){
+            console.log('Error in Database');
+        }else{
+            results.forEach(role => {
+                let temp = {
+                    name: role.title,
+                    value: role.id
+                }
+                roleList.push(temp);
+            });
+        }
+    });
+    
+    inquirer
+        .prompt([
+            {
+            type: 'input',
+            message: "Press enter to continue.",
+            name: 'confirm',
+        },
+        {
+            type: 'list',
+            message: "Delete which role?",
+            name: 'role',
+            choices: roleList,
+        },
+    ])
+    .then(answer => {
+        db.query(`DELETE FROM role WHERE id = ${answer.role};`, function(err,results){
+            if (err){
+                console.log('Error in Database');
+            }else{
+                console.log("Success")
+                init();
+            }
+        });
+    })
+};
+
+function delEmp(){
+    const empList =[];
+    db.query('SELECT concat (first_name, " ", last_name) as name, id FROM employee;', function(err, results){
+        if (err){
+            console.log('Error in Database');
+        }else{
+            results.forEach(emp => {
+                let temp = {
+                    name: emp.name,
+                    value: emp.id
+                }
+                empList.push(temp);
+            });
+        }
+    });
+    
+    inquirer
+        .prompt([
+            {
+            type: 'input',
+            message: "Press enter to continue.",
+            name: 'confirm',
+        },
+        {
+            type: 'list',
+            message: "Delete which employee?",
+            name: 'emp',
+            choices: empList,
+        },
+    ])
+    .then(answer => {
+        db.query(`DELETE FROM employee WHERE id = ${answer.emp};`, function(err,results){
+            if (err){
+                console.log('Error in Database');
+            }else{
+                console.log("Success")
+                init();
+            }
+        });
+    })
+};
+
+function totalBudgetByDept(){
+    const deptList =[];
+    db.query('SELECT name, id FROM department;', function(err, results){
+        if (err){
+            console.log('Error in Database');
+        }else{
+            results.forEach(emp => {
+                let temp = {
+                    name: emp.name,
+                    value: emp.id
+                }
+                deptList.push(temp);
+            });
+        }
+    });
+    
+    inquirer
+        .prompt([
+            {
+            type: 'input',
+            message: "Press enter to continue.",
+            name: 'confirm',
+        },
+        {
+            type: 'list',
+            message: "Delete which department?",
+            name: 'dept',
+            choices: deptList,
+        },
+    ])
+    .then(answer => {
+        db.query(`SELECT SUM(salary) AS Total_Budget_of_Department FROM role WHERE department_id = ${answer.dept};`, function(err,results){
+            if (err){
+                console.log('Error in Database');
+            }else{
+                console.table(results);
+                init();
+            }
+        });
+    })
+};
+
+init();
