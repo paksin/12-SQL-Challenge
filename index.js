@@ -2,6 +2,7 @@ const mysql = require('mysql2');
 const inquirer = require('inquirer');
 const cTable = require('console.table');
 
+// Connects to mysql database and displays welcome message
 const db = mysql.createConnection({
     host: 'localhost',
     user: 'root',
@@ -11,6 +12,7 @@ const db = mysql.createConnection({
 console.log(`Connected to the company_db database.\n\n------------------------------------\n|                                  |\n|         EMPLOYEE MANAGER         |\n|                                  |\n------------------------------------\n`)
 );
 
+// Main function of application to choose action
 function init() {
     inquirer
         .prompt([{
@@ -71,6 +73,7 @@ function init() {
         });
 };
 
+// Returns all departments in company to console
 function viewDept() {
     db.query('SELECT * FROM department;', function(err, results){
         if (err){
@@ -82,6 +85,7 @@ function viewDept() {
     });
 };
 
+// Returns all roles in company to console
 function viewRole(){
     db.query('SELECT role.id, role.title, department.name as department, role.salary FROM role LEFT JOIN department ON role.department_id = department.id;', function(err, results){
         if (err){
@@ -93,6 +97,7 @@ function viewRole(){
     });
 };
 
+// Returns all employees in company to console
 function viewEmployee(){
     db.query('SELECT a.id, a.first_name, a.last_name, role.title, department.name as department, role.salary, concat(b.first_name, " ", b.last_name) AS manager FROM employee AS a LEFT JOIN employee AS b ON a.manager_id = b.id LEFT JOIN role ON a.role_id = role.id LEFT JOIN department ON role.department_id = department.id;', function(err, results){
         if (err){
@@ -104,6 +109,7 @@ function viewEmployee(){
     });
 }; 
 
+// Allows user to add a new department
 function addDept(){
     inquirer
         .prompt([{
@@ -124,6 +130,7 @@ function addDept(){
     })
 };
 
+// Allows user to add a new role
 function addRole(){
     const deptList = [];
     db.query('SELECT name, id FROM department;', function(err, results){
@@ -167,6 +174,7 @@ function addRole(){
     })
 };
 
+// Allows user to add a new employee
 function addEmployee(){
     const roleList = [];
     const empList =[];
@@ -229,6 +237,7 @@ function addEmployee(){
     })
 };
 
+// Allows user to change an employee's role
 function updateRole(){
     const roleList = [];
     const empList =[];
@@ -290,6 +299,7 @@ function updateRole(){
     })
 };
 
+// Allows user to change an employee's manager
 function updateMan(){
     const empList =[];
     db.query('SELECT concat (first_name, " ", last_name) as name, id FROM employee;', function(err, results){
@@ -337,6 +347,7 @@ function updateMan(){
     })
 };
 
+// Returns all employees under the specified manager to console
 function viewEmpByMan(){
     const manList =[];
     db.query('SELECT concat (first_name, " ", last_name) as name, id FROM employee WHERE manager_id IS NULL;', function(err, results){
@@ -379,6 +390,7 @@ function viewEmpByMan(){
     })
 };
 
+// Returns all employees in the specified department to console
 function viewEmpByDept(){
     const deptList =[];
     db.query('SELECT name, id FROM department;', function(err, results){
@@ -421,6 +433,7 @@ function viewEmpByDept(){
     })
 };
 
+// Allows user to delete a department
 function delDept(){
     const deptList =[];
     db.query('SELECT name, id FROM department;', function(err, results){
@@ -463,6 +476,7 @@ function delDept(){
     })
 };
 
+// Allows user to delete a role
 function delRole(){
     const roleList =[];
     db.query('SELECT title, id FROM role;', function(err, results){
@@ -505,6 +519,7 @@ function delRole(){
     })
 };
 
+// Allows user to delete an employee
 function delEmp(){
     const empList =[];
     db.query('SELECT concat (first_name, " ", last_name) as name, id FROM employee;', function(err, results){
@@ -547,6 +562,7 @@ function delEmp(){
     })
 };
 
+// Returns the total budget of a specified department to console
 function totalBudgetByDept(){
     const deptList =[];
     db.query('SELECT name, id FROM department;', function(err, results){
