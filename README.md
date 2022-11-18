@@ -1,4 +1,4 @@
-# 12-SQL-Challenge
+# Employee Manager
 
 ## Walkthrough Video Link
 https://drive.google.com/file/d/19_SXOoTSm9IWvPIOZ1Lzzlgy-ySK97MJ/view
